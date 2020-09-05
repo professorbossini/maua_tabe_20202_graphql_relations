@@ -1,5 +1,5 @@
 import { GraphQLServer } from 'graphql-yoga';
-
+import {v4 as uuidv4} from 'uuid';
 const pessoas = [
   {
     id: '1',
@@ -80,6 +80,30 @@ const typeDefs = `
     pessoas: [Pessoa!]!
     comentarios: [Comentario!]!
   }
+
+  type Mutation {
+    inserirPessoa (pessoa: InserirPessoaInput): Pessoa!
+    inserirLivro (livro: InserirLivroInput):Livro!
+    inserirComentario (comentario: InserirComentarioInput): Comentario!
+  }
+
+  input InserirPessoaInput{
+    nome: String!
+    idade: Int
+  }
+
+  input InserirLivroInput {
+    titulo: String!
+    edicao: Int!
+    autor: ID!
+  }
+
+  input InserirComentarioInput {
+    texto: String!
+    nota: Int!
+    livro: ID!
+    autor: ID!
+  }
 `;
 
 const resolvers = {
@@ -92,6 +116,48 @@ const resolvers = {
     },
     comentarios (){
       return comentarios;
+    }
+  },
+  Mutation: {
+    inserirPessoa (parent, args, ctx, info){
+      const pessoa = {
+        id: uuidv4(),
+        nome: args.pessoa.nome,
+        idade: args.pessoa.idade
+      };
+      pessoas.push(pessoa);
+      return pessoa;
+    },
+    inserirLivro (parent, args, ctx, info){
+      const autorExiste = pessoas.some((pessoa) => {
+        return pessoa.id === args.livro.autor
+      });
+      if (!autorExiste){
+        throw new Error ("Autor não existe");
+      }
+      const livro = {
+        id: uuidv4(),
+        titulo: args.livro.titulo,
+        edicao: args.livro.edicao,
+        autor: args.livro.autor
+      };
+      livros.push(livro);
+      return livro;
+    },
+    inserirComentario (parent, args, ctx, info){
+      if (!pessoas.some((p) => p.id === args.comentario.autor) ||
+          !livros.some((l) => l.id === args.comentario.livro)){
+            throw new Error ("Autor e/ou Livro não existem")
+      }
+      const comentario = {
+        id: uuidv4(),
+        texto: args.comentario.texto,
+        nota: args.comentario.nota,
+        autor: args.comentario.autor,
+        livro: args.comentario.livro
+      };
+      comentarios.push(comentario);
+      return comentario;
     }
   },
   Livro: {
