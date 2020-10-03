@@ -8,6 +8,19 @@ const Subscription = {
       }, 2000);
       return ctx.pubSub.asyncIterator ('dado');
     }
+  },
+  comentario: {
+    subscribe (parent, args, ctx, info){
+      const livro = ctx.db.livros.find((l) => l.id === args.idLivro);
+      if (!livro)
+        throw new Error ('Livro não existe!')
+      return ctx.pubSub.asyncIterator(`comentario${args.idLivro}`)
+    }
+  },
+  livro: {
+    subscribe (parent, args, ctx, info){
+      return ctx.pubSub.asyncIterator("livro");
+    }
   }
 };
 
